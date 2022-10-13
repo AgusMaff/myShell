@@ -1,0 +1,16 @@
+echo Hola
+echo soy
+echo myShell
+echo estoy
+echo tomando
+echo los
+echo comandos
+echo de
+echo un
+echo archivo
+echo txt
+
+ls /bin
+
+
+

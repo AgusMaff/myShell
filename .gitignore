@@ -1,0 +1,6 @@
+# archivos de clion
+CMakeLists.txt
+cmake-build-debug
+.idea/
+*.o
+myShell
