@@ -3,6 +3,7 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include "jobsControl.h"
 
 #define MAX 256
 
@@ -172,16 +173,46 @@ void act4(char *arg){
          system((char*)buff); //utilizo la systema call para ejecutar la linea guatdada en el buffer
      }
 }
-void act5(char *cmd,char *arg){
-    pid_t ret;
-    ret = fork();
-    n_job++;
-    switch (ret) {
-        case 0:
-            n_job--;
-            act3(cmd,arg);
-            break;
-        default:
-            printf("[%d] %d\n", n_job, ret);  //en este caso no se coloca el wait() ya que no quiero que el proceso padre espere al hijo, sino que se siga ejecutando
+void act5(char *command,char *arguments){
+    int n = 0;
+    char** argv = malloc(sizeof(char*));
+    //guarda el comando a ejecutar en el primer elemento del argv
+    argv[n] = malloc(sizeof(char) * strlen(command));
+    strcpy(argv[(n)++], command);
+
+    //se procede con el resto de argumentos
+    char* token = strtok(arguments, " ");
+    while (token != NULL)
+    {
+        argv[n] = malloc(sizeof(char) * strlen(token));
+        strcpy(argv[(n)++], token);
+        argv = realloc(argv, sizeof(char*) * (n + 1));
+        token = strtok(NULL, " ");
     }
+    argv[n] = NULL; //fin de argumentos
+
+    //se construye la estructura del proceso utilizada para su manejo
+    Process *process = malloc(sizeof(Process));
+    process->argc = n;
+    process->argv = argv;
+    process->next = NULL;
+    process->id   = -1;
+    process->status = PROCESS_NEW;
+
+    //se construye la estructura del job utilizada para su manejo
+    Job *job = malloc(sizeof(Job));
+    job->next = NULL;
+    job->job_id = -1;
+    job->head_process = process; //el proceso pasa a formar parte del trabajo
+    job->pgid = -1;
+    if(!strcmp(argv[n-1],"&")) //se determina el modo de ejecución
+    {
+        job->execution_mode = JOBS_BEHIND;
+        free(argv[n-1]);
+        argv[n-1] = NULL;
+    }
+    else
+        job->execution_mode = JOBS_AHEAD;
+
+    launchJob(job); //lanzamos el trabajo
 }
